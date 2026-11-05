@@ -146,6 +146,9 @@ function memoryStore() {
 function pgStore(url) {
   const { Pool } = require('pg');
   const pool = new Pool({ connectionString: url, ssl: { rejectUnauthorized: false }, max: 3 });
+  // Neon connection kete dile pool error dey. Listener na thakle puro server crash kore.
+  // Porer query te pool nijei notun connection khule ney.
+  pool.on('error', err => console.error('Database connection kete geche:', err.message));
   const q = (sql, args) => pool.query(sql, args);
   return {
     kind: 'postgres',
