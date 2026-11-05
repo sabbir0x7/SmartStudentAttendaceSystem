@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RFID Attendance</title>
+<script>try{const t=localStorage.getItem('theme');if(['light','dark','night'].includes(t))document.documentElement.dataset.theme=t}catch{}</script>
+<style>
+:root{color-scheme:light;--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--muted:#6b6a64;--line:#e4e2da;--ok:#1f7a3a;--okbg:#e6f4ea;--no:#b3261e;--nobg:#fcebea;--warn:#8a5a00;--warnbg:#fff4dc;--acc:#0b6f8f;--accbg:#e3f2f7;--field:#fff;--on-acc:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark;--bg:#161615;--card:#21211f;--ink:#ecebe6;--muted:#a3a29b;--line:#363633;--ok:#7fd99a;--okbg:#17321f;--no:#ff9b93;--nobg:#3a1c1a;--warn:#f2c46b;--warnbg:#3a2e12;--acc:#5cc3e6;--accbg:#123039;--field:#1a1a19;--on-acc:#06232c}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#161615;--card:#21211f;--ink:#ecebe6;--muted:#a3a29b;--line:#363633;--ok:#7fd99a;--okbg:#17321f;--no:#ff9b93;--nobg:#3a1c1a;--warn:#f2c46b;--warnbg:#3a2e12;--acc:#5cc3e6;--accbg:#123039;--field:#1a1a19;--on-acc:#06232c}
+/* Night: rate chokh e aram, nil alo kom, ushno rong */
+:root[data-theme=night]{color-scheme:dark;--bg:#14100b;--card:#1e1810;--ink:#e8d8bd;--muted:#a8977c;--line:#3a2f20;--ok:#a8c97f;--okbg:#232a14;--no:#e8907a;--nobg:#38190f;--warn:#e8b55c;--warnbg:#35260d;--acc:#e0a458;--accbg:#33240f;--field:#19130c;--on-acc:#1f1506}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali","Hind Siliguri",sans-serif}
+.wrap{max-width:920px;margin:0 auto;padding:18px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+h1{font-size:21px;margin:0;font-weight:650}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 14px}
+nav{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:16px;scrollbar-width:none}
+nav button{border:0;background:none;padding:9px 12px;color:var(--muted);font:inherit;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+nav button.on{color:var(--ink);border-bottom-color:var(--acc);font-weight:600}
+section{display:none}section.on{display:block}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input,select,textarea,button,a.btn{font:inherit;padding:7px 11px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink);text-decoration:none}
+button,a.btn{cursor:pointer;background:var(--card)}
+button.pri{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+button.dan{color:var(--no)}
+button:disabled{opacity:.5;cursor:default}
+textarea{width:100%;min-height:72px;resize:vertical}
+label{display:block;font-size:13px;color:var(--muted)}
+label input,label select{display:block;width:100%;margin-top:3px;color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font-size:24px;font-weight:650}.stat span{color:var(--muted);font-size:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.card h2{font-size:14px;font-weight:600;margin:0;padding:10px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pad{padding:12px 14px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+th{color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+.P{background:var(--okbg);color:var(--ok)}.A{background:var(--nobg);color:var(--no)}.U{background:var(--warnbg);color:var(--warn)}.I{background:var(--accbg);color:var(--acc)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--muted)}
+.note{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:14px}
+.info{background:var(--accbg);color:var(--ink);border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:14px}
+.empty{padding:16px 14px;color:var(--muted)}
+.muted{color:var(--muted);font-size:13px}
+.score{width:90px;padding:5px 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 11px;font-size:13px;background:var(--card)}
+.chip button{border:0;padding:0 7px;border-radius:999px;background:none;color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:0;width:min(640px,calc(100vw - 32px));max-height:85vh}
+dialog::backdrop{background:#0006}
+dialog .head{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:600}
+dialog .body{padding:12px 16px;overflow:auto;max-height:60vh}
+dialog .foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.fsec{font-size:13px;font-weight:600;margin:16px 0 8px}
+.msg{background:var(--bg);border-radius:8px;padding:6px 10px;font-size:13px;margin-top:4px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.row-hot td{background:var(--nobg)}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--bg)}tr.click.row-hot:hover td{background:var(--nobg)}
+.log{padding:10px 14px;border-bottom:1px solid var(--line)}.log:last-child{border-bottom:0}
+.log .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.log .top .pill{margin-left:auto}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.hide-s{display:none}}
+</style></head><body><div class="wrap">
+<header><h1>RFID Attendance</h1><span style="display:flex;align-items:center;gap:10px"><span class="muted" id="hdr"></span><select id="themeSel" aria-label="থিম"><option value="auto">সিস্টেম</option><option value="light">লাইট</option><option value="dark">ডার্ক</option><option value="night">নাইট</option></select><button id="logout">লগআউট</button></span></header>
+<p class="sub" id="sub">লোড হচ্ছে…</p>
+<div id="note"></div>
+<nav id="nav">
+  <button data-t="today" class="on">আজকের হাজিরা</button>
+  <button data-t="students">ছাত্র-ছাত্রী</button>
+  <button data-t="results">রেজাল্ট</button>
+  <button data-t="days">ক্লাসের দিন</button>
+  <button data-t="sms">SMS</button>
+  <button data-t="settings">সেটিংস</button>
+</nav>
+
+<!-- ===== Today ===== -->
+<section id="t-today" class="on">
+  <div class="bar">
+    <input type="date" id="day"><button id="todayBtn">আজ</button>
+    <a class="btn" id="csv" href="#">CSV ডাউনলোড</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b id="sP">0</b><span>উপস্থিত</span></div>
+    <div class="stat"><b id="sA">0</b><span>অনুপস্থিত</span></div>
+    <div class="stat"><b id="sT">0</b><span>মোট ছাত্র</span></div>
+    <div class="stat"><b id="sU">0</b><span>অচেনা কার্ড</span></div>
+  </div>
+  <div class="card"><h2>তালিকা <span class="muted">প্রতি ৫ সেকেন্ডে আপডেট</span></h2><div class="tw" id="dayList"></div></div>
+  <div class="card" id="ucard"><h2>অচেনা কার্ড</h2><div class="tw" id="ulist"></div></div>
+</section>
+
+<!-- ===== Students ===== -->
+<section id="t-students">
+  <div class="bar"><button class="pri" id="stuNew">+ নতুন ছাত্র যোগ করুন</button></div>
+  <div class="card"><h2>সব ছাত্র <span class="muted" id="semInfo"></span></h2><div class="tw" id="stuList"></div></div>
+</section>
+
+<!-- ===== Results ===== -->
+<section id="t-results">
+  <div class="info" id="resSem"></div>
+  <div class="bar">
+    <select id="examSel"></select>
+    <input id="examNew" list="examSug" placeholder="পরীক্ষা, যেমন Mid Term" style="width:200px">
+    <datalist id="examSug"><option>Class Test</option><option>Mid Term</option><option>Final</option></datalist>
+    <button id="examAdd">যোগ করুন</button>
+  </div>
+  <div class="card"><h2><span id="examTitle">পরীক্ষা</span>
+    <span class="bar" style="margin:0"><button class="dan" id="examDel">মুছুন</button></span></h2>
+    <div class="tw" id="resList"></div>
+    <div class="pad bar" style="margin:0;border-top:1px solid var(--line)">
+      <button class="pri" id="resSave">নম্বর সেভ করুন</button>
+      <button id="resSms">এই পরীক্ষার রেজাল্ট SMS করুন</button>
+      <button id="resSmsAll">সেমিস্টারের সব রেজাল্ট SMS করুন</button>
+    </div>
+  </div>
+  <p class="muted">নম্বর যেভাবে লিখবেন সেভাবেই SMS-এ যাবে, যেমন <b>18/20</b> বা GPA হলে <b>3.75</b>। ঘর খালি রাখলে ওই ছাত্রের নম্বর মুছে যাবে।</p>
+</section>
+
+<!-- ===== Class days ===== -->
+<section id="t-days">
+  <div class="info">কোনো দিন অন্তত একজন কার্ড দিলে সেটা নিজে থেকেই ক্লাসের দিন হিসেবে ধরা হয়। পরীক্ষা করার দিন বা ভুল দিন মুছে দিন, যাতে অনুপস্থিতির হিসাব ঠিক থাকে।</div>
+  <div class="bar"><input type="date" id="cdNew"><button id="cdAdd">ক্লাসের দিন যোগ করুন</button></div>
+  <div class="card"><h2>এই সেমিস্টারের ক্লাসের দিন <span class="muted" id="cdCount"></span></h2><div class="pad chips" id="cdList"></div></div>
+</section>
+
+<!-- ===== SMS ===== -->
+<section id="t-sms">
+  <div id="smsMode"></div>
+  <div class="card"><h2>টানা অনুপস্থিতির SMS</h2><div class="pad">
+    <p class="muted" style="margin-top:0" id="autoInfo"></p>
+    <div class="bar" style="margin:0">
+      <button class="pri" id="absPrev">কারা SMS পাবে দেখুন ও পাঠান</button>
+    </div>
+  </div></div>
+  <div class="card"><h2>টেস্ট SMS</h2><div class="pad">
+    <div class="bar" style="margin:0">
+      <input id="testPhone" placeholder="01XXXXXXXXX" inputmode="tel" style="width:170px">
+      <input id="testMsg" placeholder="মেসেজ (ঐচ্ছিক)" style="flex:1;min-width:160px">
+      <button id="testSend">পাঠান</button>
+    </div>
+  </div></div>
+  <div class="card"><h2>পাঠানো SMS-এর তালিকা <button id="logRefresh">রিফ্রেশ</button></h2><div class="tw" id="smsLog"></div></div>
+</section>
+
+<!-- ===== Settings ===== -->
+<section id="t-settings">
+  <div class="card"><h2>সেমিস্টার</h2><div class="pad grid">
+    <label>সেমিস্টারের নাম<input id="sSem"></label>
+    <label>সেমিস্টার শুরুর তারিখ<input type="date" id="sStart"></label>
+  </div></div>
+  <div class="card"><h2>অটো SMS</h2><div class="pad grid">
+    <label>টানা কত দিন অনুপস্থিত হলে<input type="number" id="sDays" min="1" max="30"></label>
+    <label>প্রতিদিন কখন চেক করবে<input type="time" id="sTime"></label>
+    <label>অটো SMS<select id="sAuto"><option value="on">চালু</option><option value="off">বন্ধ</option></select></label>
+  </div></div>
+  <div class="card"><h2>মেসেজের লেখা</h2><div class="pad">
+    <label>অনুপস্থিতির মেসেজ</label>
+    <textarea id="sAbsT"></textarea>
+    <p class="muted" id="sAbsC"></p>
+    <label>রেজাল্টের মেসেজ</label>
+    <textarea id="sResT"></textarea>
+    <p class="muted" id="sResC"></p>
+    <p class="muted">যেসব শব্দ বসানো যায়: <code>{name}</code> নাম, <code>{roll}</code> রোল, <code>{days}</code> টানা কত দিন অনুপস্থিত, <code>{total}</code> মোট ক্লাস, <code>{absent}</code> মোট অনুপস্থিত, <code>{present}</code> মোট উপস্থিত, <code>{results}</code> রেজাল্ট, <code>{semester}</code> সেমিস্টার, <code>{guardian}</code> অভিভাবকের নাম।<br>বাংলা অক্ষরে এক SMS-এ ৭০ অক্ষর, ইংরেজি অক্ষরে ১৬০ অক্ষর ধরে। ইংরেজি অক্ষরে লিখলে খরচ কম।</p>
+  </div></div>
+  <button class="pri" id="sSave">সেটিংস সেভ করুন</button>
+</section>
+</div>
+
+<dialog id="stuDlg"><div class="head" id="formTitle">নতুন ছাত্র যোগ করুন</div><div class="body">
+  <div class="fsec" style="margin-top:0">কার্ড ও পরিচয়</div>
+  <div class="grid">
+    <label>কার্ড UID (অবশ্যই লাগবে)<input id="fUid" placeholder="C9786D14" autocomplete="off"></label>
+    <label>রোল<input id="fRoll" placeholder="01"></label>
+    <label>নাম<input id="fName" placeholder="Sabbir"></label>
+  </div>
+  <div class="fsec">পরিবার</div>
+  <div class="grid">
+    <label>অভিভাবকের নাম<input id="fGuardian"></label>
+    <label>অভিভাবকের মোবাইল (SMS যাবে)<input id="fPhone" placeholder="01XXXXXXXXX" inputmode="tel"></label>
+    <label>বাবার নাম<input id="fFather"></label>
+    <label>মায়ের নাম<input id="fMother"></label>
+    <label>পরিবারের আরেকটি নম্বর<input id="fFamilyPhone" placeholder="01XXXXXXXXX" inputmode="tel"></label>
+  </div>
+  <div class="fsec">একাডেমিক</div>
+  <div class="grid">
+    <label>স্টুডেন্ট আইডি<input id="fStudentId"></label>
+    <label>ডিপার্টমেন্ট<input id="fDepartment" placeholder="CSE"></label>
+    <label>ব্যাচ<input id="fBatch"></label>
+    <label>সেকশন<input id="fSection"></label>
+  </div>
+  <div class="fsec">রেজাল্ট <span class="muted" id="fSem"></span></div>
+  <div class="grid">
+    <label>Class Test<input class="fExam" data-exam="Class Test" placeholder="18/20"></label>
+    <label>Mid Term<input class="fExam" data-exam="Mid Term" placeholder="25/30"></label>
+    <label>Final<input class="fExam" data-exam="Final" placeholder="42/50"></label>
+  </div>
+  <div class="fsec">CGPA</div>
+  <div class="grid">
+    <label>গত সেমিস্টারের CGPA<input id="fLastCgpa" placeholder="3.75" inputmode="decimal"></label>
+    <label>মোট গড় CGPA<input id="fAvgCgpa" placeholder="3.60" inputmode="decimal"></label>
+  </div>
+</div><div class="foot">
+  <button class="dan" id="fDel" hidden style="margin-right:auto">এই ছাত্রকে মুছুন</button>
+  <button id="fCancel">বাতিল</button>
+  <button class="pri" id="fSave">সেভ করুন</button>
+</div></dialog>
+
+<dialog id="dlg"><div class="head" id="dlgHead"></div><div class="body" id="dlgBody"></div>
+<div class="foot"><button id="dlgCancel">বন্ধ করুন</button><button class="pri" id="dlgOk" hidden>পাঠান</button></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const t12=t=>{if(!t)return'';let[h,m]=t.split(':').map(Number);const ap=h<12?'AM':'PM';h=h%12||12;return h+':'+String(m).padStart(2,'0')+' '+ap};
+const fmtDay=d=>new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600)};
+async function api(path,body){
+  const r=await fetch(path,body===undefined?{cache:'no-store'}:{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'admin'},body:JSON.stringify(body)});
+  let d={};try{d=await r.json()}catch{}
+  if(r.status===401)location.href='/login'; // session shesh hole abar login
+  if(!r.ok)throw new Error(d.error||('Error '+r.status));
+  return d;
+}
+const isBn=s=>/[^\x00-\x7F]/.test(s);
+function smsCount(s){const len=[...s].length;if(isBn(s))return len<=70?1:Math.ceil(len/67);return len<=160?1:Math.ceil(len/153)}
+
+let tab='today',OV=null,day='',today='',exam='';
+
+// Theme: ei browser e mone thake
+$('themeSel').value=document.documentElement.dataset.theme||'auto';
+$('themeSel').onchange=e=>{const t=e.target.value,r=document.documentElement;
+  if(t==='auto')delete r.dataset.theme;else r.dataset.theme=t;
+  try{localStorage.setItem('theme',t)}catch{}};
+
+$('logout').onclick=async()=>{try{await api('/admin/logout',{});location.href='/login'}catch(e){toast(e.message)}};
+
+// ---- Tabs ----
+$('nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.t;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+tab));
+  refresh()};
+
+async function refresh(){
+  try{
+    if(tab==='today')return loadDay();
+    OV=await api('/admin/overview');renderHeader();
+    if(tab==='students')renderStudents();
+    if(tab==='results')renderResults();
+    if(tab==='days')renderDays();
+    if(tab==='sms'){renderSmsTop();loadLog()}
+    if(tab==='settings')renderSettings();
+  }catch(e){$('sub').textContent='ডেটা আনা যায়নি: '+e.message}
+}
+function renderHeader(){
+  if(!OV)return;
+  $('hdr').textContent=OV.settings.semester;
+  $('sub').textContent='সেমিস্টার শুরু '+fmtDay(OV.start)+' · মোট ক্লাস '+OV.classDays.length+' দিন';
+  $('note').innerHTML=OV.storage==='memory'?'<div class="note">DATABASE_URL সেট করা নেই। সার্ভার ঘুমালে বা রিস্টার্ট হলে সব তথ্য মুছে যাবে।</div>':'';
+}
+
+// ---- Today ----
+async function loadDay(){
+  try{
+    const d=await api('/admin/day'+(day?'?date='+day:''));
+    today=d.today;if(!day)day=d.day;$('day').value=d.day;
+    $('csv').href='/export.csv?date='+d.day;
+    const present=new Map(d.scans.filter(s=>s.status==='Present').map(s=>[s.uid,s]));
+    const rows=[];
+    d.students.forEach(s=>{const p=present.get(s.uid);rows.push({roll:s.roll,name:s.name,uid:s.uid,p});present.delete(s.uid)});
+    present.forEach(p=>rows.push({roll:p.roll,name:p.name,uid:p.uid,p}));
+    const nP=rows.filter(x=>x.p).length,nT=rows.length;
+    const unk=[...new Map(d.scans.filter(s=>s.status==='Unknown').map(u=>[u.uid,u])).values()];
+    $('sP').textContent=nP;$('sA').textContent=nT-nP;$('sT').textContent=nT;$('sU').textContent=unk.length;
+    $('dayList').innerHTML=rows.length?'<table><tr><th>রোল</th><th>নাম</th><th>অবস্থা</th><th class="hide-s">UID</th><th>সময়</th></tr>'+
+      rows.map(x=>'<tr><td>'+esc(x.roll)+'</td><td>'+esc(x.name)+'</td><td><span class="pill '+(x.p?'P">উপস্থিত':'A">অনুপস্থিত')+'</span></td><td class="mono hide-s">'+esc(x.uid)+'</td><td>'+(x.p?t12(x.p.time):'–')+'</td></tr>').join('')+'</table>'
+      :'<div class="empty">এখনো কোনো ছাত্র নেই। "ছাত্র-ছাত্রী" ট্যাবে যোগ করুন, অথবা ESP32 চালু হলে নিজে থেকেই আসবে।</div>';
+    $('ucard').style.display=unk.length?'':'none';
+    $('ulist').innerHTML='<table><tr><th>UID</th><th>সময়</th><th></th></tr>'+unk.map(u=>'<tr><td class="mono">'+esc(u.uid)+'</td><td>'+t12(u.time)+'</td><td><button data-add="'+esc(u.uid)+'">ছাত্র হিসেবে যোগ করুন</button></td></tr>').join('')+'</table>';
+    $('sub').textContent=(d.day===today?'আজ, ':'')+new Date(d.day+'T00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    $('note').innerHTML=d.storage==='memory'?'<div class="note">DATABASE_URL সেট করা নেই। সার্ভার ঘুমালে বা রিস্টার্ট হলে সব তথ্য মুছে যাবে।</div>':'';
+  }catch(e){$('sub').textContent='ডেটা আনা যায়নি, আবার চেষ্টা করছে…'}
+}
+$('day').onchange=e=>{day=e.target.value;loadDay()};
+$('todayBtn').onclick=()=>{day=today;loadDay()};
+$('ulist').onclick=async e=>{const u=e.target.dataset.add;if(!u)return;
+  document.querySelector('nav button[data-t=students]').click();
+  // Ei UID er ager nombor thakle form e dekhate OV lagbe, nahole save e muche jeto
+  try{OV=await api('/admin/overview');editStudent({uid:u})}catch(err){toast(err.message)}};
+setInterval(()=>{if(tab==='today'&&!document.hidden)loadDay()},5000);
+
+// ---- Students ----
+let editing=null;
+const stuFields={fRoll:'roll',fName:'name',fGuardian:'guardian',fPhone:'phone',fFather:'father',fMother:'mother',fFamilyPhone:'family_phone',fStudentId:'student_id',fDepartment:'department',fBatch:'batch',fSection:'section',fLastCgpa:'last_cgpa',fAvgCgpa:'avg_cgpa'};
+function editStudent(s){
+  editing=s.roll!==undefined?s.uid:null;
+  $('fUid').value=s.uid||'';
+  for(const[id,k]of Object.entries(stuFields))$(id).value=s[k]||'';
+  // Shudhu ei chhatrer nombor
+  const mine=new Map((OV?.results||[]).filter(r=>r.uid===s.uid).map(r=>[r.exam,r.score]));
+  document.querySelectorAll('.fExam').forEach(i=>i.value=mine.get(i.dataset.exam)||'');
+  $('fSem').textContent=OV?'('+OV.settings.semester+')':'';
+  $('formTitle').textContent=editing?'ছাত্রের তথ্য বদলান':'নতুন ছাত্র যোগ করুন';
+  $('fDel').hidden=!editing;
+  $('stuDlg').showModal();
+  $('stuDlg').querySelector('.body').scrollTop=0;
+  (s.uid?$('fRoll'):$('fUid')).focus();
+}
+$('stuNew').onclick=()=>editStudent({});
+$('fCancel').onclick=()=>$('stuDlg').close();
+$('fSave').onclick=async()=>{
+  const body={uid:$('fUid').value,oldUid:editing,results:{}};
+  for(const[id,k]of Object.entries(stuFields))body[k]=$(id).value;
+  document.querySelectorAll('.fExam').forEach(i=>body.results[i.dataset.exam]=i.value.trim());
+  try{
+    await api('/admin/student',body);
+    toast('সেভ হয়েছে');$('stuDlg').close();refresh();
+  }catch(e){toast(e.message)}
+};
+function renderStudents(){
+  const need=+OV.settings.absent_days||3;
+  $('semInfo').textContent=OV.students.length+' জন';
+  $('stuList').innerHTML=OV.students.length?'<table><tr><th>রোল</th><th>নাম</th><th class="hide-s">UID</th><th>অভিভাবকের মোবাইল</th><th class="num">ক্লাস</th><th class="num">অনুপস্থিত</th><th class="num">টানা</th></tr>'+
+    OV.students.map((s,i)=>'<tr data-i="'+i+'" class="click'+(s.streak>=need?' row-hot':'')+'"><td>'+esc(s.roll)+'</td><td>'+esc(s.name)+(s.guardian?'<div class="muted">'+esc(s.guardian)+'</div>':'')+([s.student_id,s.department,s.batch,s.section].some(Boolean)?'<div class="muted">'+esc([s.student_id,s.department,s.batch,s.section].filter(Boolean).join(' · '))+'</div>':'')+'</td><td class="mono hide-s">'+esc(s.uid)+'</td><td>'+(s.phone?esc(s.phone):'<span class="pill U">নেই</span>')+'</td><td class="num">'+s.total+'</td><td class="num">'+s.absent+'</td><td class="num">'+s.streak+'</td></tr>').join('')+'</table><p class="muted pad" style="margin:0">কোনো সারিতে চাপ দিলে তথ্য বদলানো বা মুছে ফেলা যাবে। লাল সারি মানে টানা অনুপস্থিত।</p>'
+    :'<div class="empty">কোনো ছাত্র নেই।</div>';
+}
+$('stuList').onclick=e=>{const tr=e.target.closest('tr[data-i]');if(tr)editStudent(OV.students[+tr.dataset.i])};
+$('fDel').onclick=async()=>{
+  const s=OV.students.find(x=>x.uid===editing);if(!s)return;
+  if(!confirm(s.name+' কে মুছে ফেলবেন? তার হাজিরার পুরনো রেকর্ড থেকে যাবে।'))return;
+  try{await api('/admin/student/delete',{uid:s.uid});toast('মুছে ফেলা হয়েছে');$('stuDlg').close();refresh()}catch(e){toast(e.message)}
+};
+
+// ---- Results ----
+function examList(){return[...new Set(OV.results.map(r=>r.exam))]}
+function renderResults(){
+  $('resSem').textContent='সেমিস্টার: '+OV.settings.semester+' (সেটিংস ট্যাব থেকে বদলানো যায়)';
+  const ex=examList();if(exam&&!ex.includes(exam))ex.push(exam);
+  if(!exam&&ex.length)exam=ex[ex.length-1];
+  $('examSel').innerHTML=ex.length?ex.map(x=>'<option'+(x===exam?' selected':'')+'>'+esc(x)+'</option>').join(''):'<option value="">কোনো পরীক্ষা নেই</option>';
+  $('examTitle').textContent=exam?exam+'-এর নম্বর':'আগে একটা পরীক্ষা যোগ করুন';
+  ['resSave','resSms','examDel'].forEach(id=>$(id).disabled=!exam);
+  $('resSmsAll').disabled=!OV.results.length;
+  if(!exam){$('resList').innerHTML='<div class="empty">উপরে পরীক্ষার নাম লিখে "যোগ করুন" চাপুন।</div>';return}
+  const sc=new Map(OV.results.filter(r=>r.exam===exam).map(r=>[r.uid,r.score]));
+  $('resList').innerHTML=OV.students.length?'<table><tr><th>রোল</th><th>নাম</th><th>নম্বর</th></tr>'+
+    OV.students.map(s=>'<tr><td>'+esc(s.roll)+'</td><td>'+esc(s.name)+'</td><td><input class="score" data-uid="'+esc(s.uid)+'" value="'+esc(sc.get(s.uid)||'')+'" placeholder="18/20"></td></tr>').join('')+'</table>'
+    :'<div class="empty">আগে ছাত্র যোগ করুন।</div>';
+}
+$('examSel').onchange=e=>{exam=e.target.value;renderResults()};
+$('examAdd').onclick=()=>{const v=$('examNew').value.trim();if(!v)return;exam=v;$('examNew').value='';renderResults()};
+$('resSave').onclick=async()=>{
+  const scores={};document.querySelectorAll('#resList .score').forEach(i=>scores[i.dataset.uid]=i.value.trim());
+  try{await api('/admin/results',{exam,scores});toast('নম্বর সেভ হয়েছে');refresh()}catch(e){toast(e.message)}
+};
+$('examDel').onclick=async()=>{
+  if(!confirm(exam+'-এর সব নম্বর মুছে ফেলবেন?'))return;
+  try{await api('/admin/results',{exam,remove:true});exam='';toast('মুছে ফেলা হয়েছে');refresh()}catch(e){toast(e.message)}
+};
+$('resSms').onclick=()=>smsFlow('/admin/sms/results',{exam},exam+'-এর রেজাল্ট SMS');
+$('resSmsAll').onclick=()=>smsFlow('/admin/sms/results',{exam:''},'সেমিস্টারের সব রেজাল্ট SMS');
+
+// ---- Class days ----
+function renderDays(){
+  $('cdCount').textContent=OV.classDays.length+' দিন';
+  $('cdList').innerHTML=OV.classDays.length?OV.classDays.slice().reverse().map(d=>'<span class="chip">'+fmtDay(d)+'<button title="মুছুন" data-d="'+d+'">✕</button></span>').join(''):'<span class="muted">এখনো কোনো ক্লাসের দিন নেই।</span>';
+}
+$('cdAdd').onclick=async()=>{const d=$('cdNew').value;if(!d)return;
+  try{await api('/admin/classday',{day:d});toast('যোগ হয়েছে');refresh()}catch(e){toast(e.message)}};
+$('cdList').onclick=async e=>{const d=e.target.dataset.d;if(!d)return;
+  if(!confirm(fmtDay(d)+' ক্লাসের দিন থেকে বাদ দেবেন?'))return;
+  try{await api('/admin/classday',{day:d,action:'remove'});refresh()}catch(e){toast(e.message)}};
+
+// ---- SMS ----
+function modeNote(mode){return mode==='live'?'':'<div class="note"><b>টেস্ট মোড:</b> সার্ভারে SMS_URL সেট করা নেই, তাই আসল SMS যাবে না। কাকে কী মেসেজ যেত সেটা শুধু তালিকায় দেখাবে।</div>'}
+function renderSmsTop(){
+  $('smsMode').innerHTML=modeNote(OV.sms);
+  const s=OV.settings;
+  $('autoInfo').innerHTML='কেউ টানা <b>'+esc(s.absent_days)+'</b> ক্লাসের দিন অনুপস্থিত থাকলে অভিভাবককে SMS যাবে। '+
+    (s.auto_sms==='on'?'প্রতিদিন <b>'+esc(s.alert_time)+'</b>-এর পরে নিজে থেকে চেক হয়।':'অটো SMS এখন <b>বন্ধ</b>, শুধু নিচের বাটন চাপলে যাবে।')+
+    ' একই অনুপস্থিতির জন্য একজনকে একবারই পাঠানো হয়।'+(s.last_check?' শেষ চেক: '+fmtDay(s.last_check)+'।':'');
+}
+async function loadLog(){
+  try{const d=await api('/admin/sms');
+    const st={sent:'<span class="pill P">গেছে</span>',failed:'<span class="pill A">যায়নি</span>',test:'<span class="pill I">টেস্ট</span>'};
+    const kind={absent:'অনুপস্থিতি',result:'রেজাল্ট',test:'টেস্ট'};
+    $('smsLog').innerHTML=d.log.length?d.log.map(x=>'<div class="log"><div class="top"><span>'+new Date(x.at).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})+'</span><span>'+(kind[x.kind]||esc(x.kind))+'</span><span class="mono">'+esc(x.phone)+'</span>'+(st[x.status]||esc(x.status))+'</div><div class="msg">'+esc(x.message)+'</div>'+(x.status==='failed'?'<div class="muted">'+esc(x.info)+'</div>':'')+'</div>').join('')
+      :'<div class="empty">এখনো কোনো SMS পাঠানো হয়নি।</div>';
+  }catch(e){$('smsLog').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}
+}
+$('logRefresh').onclick=loadLog;
+$('absPrev').onclick=()=>smsFlow('/admin/sms/absent',{},'টানা অনুপস্থিতির SMS');
+$('testSend').onclick=async()=>{
+  try{const r=await api('/admin/sms/test',{phone:$('testPhone').value,message:$('testMsg').value});
+    toast(r.status==='sent'?'SMS পাঠানো হয়েছে':r.status==='test'?'টেস্ট মোড: আসল SMS যায়নি':'যায়নি: '+r.info);loadLog()}
+  catch(e){toast(e.message)}
+};
+
+// আগে দেখায় কারা পাবে, তারপর "পাঠান" চাপলে পাঠায়
+let dlgAction=null;
+function showItems(items,sent){
+  const will=items.filter(x=>x.message),skip=items.filter(x=>!x.message);
+  const st={sent:'<span class="pill P">গেছে</span>',failed:'<span class="pill A">যায়নি</span>',test:'<span class="pill I">টেস্ট</span>'};
+  let h='';
+  if(!items.length)h='<p class="muted">কেউ নেই, কাউকে SMS পাঠানোর দরকার নেই।</p>';
+  if(will.length)h+='<p><b>'+will.length+' জনকে '+(sent?'পাঠানো হয়েছে':'পাঠানো হবে')+'</b> (মোট আনুমানিক '+will.reduce((a,x)=>a+smsCount(x.message),0)+'টা SMS)</p>'+
+    will.map(x=>'<div style="margin-bottom:10px"><b>'+esc(x.name)+'</b> <span class="muted">রোল '+esc(x.roll)+' · '+esc(x.phone)+'</span> '+(x.status?st[x.status]||'':'')+'<div class="msg">'+esc(x.message)+'</div>'+(x.status==='failed'?'<div class="muted">'+esc(x.info)+'</div>':'')+'</div>').join('');
+  if(skip.length)h+='<p class="muted" style="margin-top:14px">বাদ পড়েছে:</p>'+skip.map(x=>'<div class="muted">'+esc(x.name)+' (রোল '+esc(x.roll)+'): '+esc(x.skip)+'</div>').join('');
+  return{h,n:will.length};
+}
+async function smsFlow(path,body,title){
+  const d=$('dlg');$('dlgHead').textContent=title;$('dlgBody').innerHTML='<p class="muted">দেখছি…</p>';$('dlgOk').hidden=true;d.showModal();
+  try{
+    const r=await api(path,{...body,dry:true});const v=showItems(r.items,false);
+    $('dlgBody').innerHTML=modeNote(r.mode)+v.h;
+    if(v.n){$('dlgOk').hidden=false;$('dlgOk').disabled=false;$('dlgOk').textContent=v.n+' জনকে পাঠান';
+      dlgAction=async()=>{$('dlgOk').disabled=true;$('dlgOk').textContent='পাঠাচ্ছে…';
+        try{const s=await api(path,{...body,dry:false});$('dlgBody').innerHTML=modeNote(s.mode)+showItems(s.items,true).h;$('dlgOk').hidden=true;loadLog()}
+        catch(e){toast(e.message);$('dlgOk').disabled=false}}}
+  }catch(e){$('dlgBody').innerHTML='<p>'+esc(e.message)+'</p>'}
+}
+$('dlgOk').onclick=()=>dlgAction&&dlgAction();
+$('dlgCancel').onclick=()=>$('dlg').close();
+
+// ---- Settings ----
+function counter(ta,out){const f=()=>{const v=ta.value;out.textContent=[...v].length+' অক্ষর (নাম আর নম্বর বসানোর পরে কিছুটা বাড়বে) · '+(isBn(v)?'বাংলা':'ইংরেজি')+' অক্ষর';};ta.oninput=f;f()}
+function renderSettings(){
+  const s=OV.settings;
+  $('sSem').value=s.semester;$('sStart').value=s.semester_start;$('sDays').value=s.absent_days;
+  $('sTime').value=s.alert_time;$('sAuto').value=s.auto_sms;$('sAbsT').value=s.absent_template;$('sResT').value=s.result_template;
+  counter($('sAbsT'),$('sAbsC'));counter($('sResT'),$('sResC'));
+}
+$('sSave').onclick=async()=>{
+  try{await api('/admin/settings',{semester:$('sSem').value,semester_start:$('sStart').value,absent_days:$('sDays').value,alert_time:$('sTime').value,auto_sms:$('sAuto').value,absent_template:$('sAbsT').value,result_template:$('sResT').value});
+    toast('সেটিংস সেভ হয়েছে');refresh()}catch(e){toast(e.message)}
+};
+
+refresh();
+</script></body></html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>লগইন | RFID Attendance</title>
+<script>try{const t=localStorage.getItem('theme');if(['light','dark','night'].includes(t))document.documentElement.dataset.theme=t}catch{}</script>
+<style>
+:root{color-scheme:light;--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--muted:#6b6a64;--line:#e4e2da;--no:#b3261e;--nobg:#fcebea;--acc:#0b6f8f;--accbg:#e3f2f7;--field:#fff;--on-acc:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){color-scheme:dark;--bg:#161615;--card:#21211f;--ink:#ecebe6;--muted:#a3a29b;--line:#363633;--no:#ff9b93;--nobg:#3a1c1a;--acc:#5cc3e6;--accbg:#123039;--field:#1a1a19;--on-acc:#06232c}}
+:root[data-theme=dark]{color-scheme:dark;--bg:#161615;--card:#21211f;--ink:#ecebe6;--muted:#a3a29b;--line:#363633;--no:#ff9b93;--nobg:#3a1c1a;--acc:#5cc3e6;--accbg:#123039;--field:#1a1a19;--on-acc:#06232c}
+:root[data-theme=night]{color-scheme:dark;--bg:#14100b;--card:#1e1810;--ink:#e8d8bd;--muted:#a8977c;--line:#3a2f20;--no:#e8907a;--nobg:#38190f;--acc:#e0a458;--accbg:#33240f;--field:#19130c;--on-acc:#1f1506}
+#themeSel{position:absolute;top:12px;right:16px;font:inherit;font-size:14px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali","Hind Siliguri",sans-serif}
+main{width:100%;max-width:920px;margin:0 auto;padding:32px 16px;display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center}
+h1{font-size:32px;line-height:1.25;margin:0 0 10px;font-weight:650}
+.lead{color:var(--muted);margin:0 0 24px;font-size:16px}
+ul{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+li{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start}
+li span{width:34px;height:34px;border-radius:10px;background:var(--accbg);color:var(--acc);display:grid;place-items:center;font-weight:650;font-size:14px}
+li b{display:block;font-weight:600}
+li small{color:var(--muted);font-size:13px}
+form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+h2{font-size:19px;margin:0 0 16px;font-weight:650}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:14px}
+input{display:block;width:100%;margin-top:4px;font:inherit;font-size:16px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button{width:100%;margin-top:4px;font:inherit;font-weight:600;padding:10px 12px;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:var(--on-acc);cursor:pointer}
+.err{background:var(--nobg);color:var(--no);border-radius:8px;padding:8px 12px;font-size:14px;margin-bottom:14px}
+@media (max-width:700px){body{align-items:flex-start}main{grid-template-columns:1fr;gap:24px;padding:60px 16px 24px}h1{font-size:26px}form{order:-1}}
+</style></head><body>
+<select id="themeSel" aria-label="থিম"><option value="auto">সিস্টেম</option><option value="light">লাইট</option><option value="dark">ডার্ক</option><option value="night">নাইট</option></select>
+<main>
+  <div>
+    <h1>RFID Attendance</h1>
+    <p class="lead">কার্ড ট্যাপ করলেই হাজিরা। ক্লাসের সব হিসাব এক জায়গায়।</p>
+    <ul>
+      <li><span>১</span><div><b>স্বয়ংক্রিয় হাজিরা</b><small>RFID কার্ড ট্যাপ করলে সাথে সাথে হাজিরা জমা হয়।</small></div></li>
+      <li><span>২</span><div><b>অভিভাবককে SMS</b><small>টানা অনুপস্থিত থাকলে অভিভাবকের ফোনে SMS যায়।</small></div></li>
+      <li><span>৩</span><div><b>রেজাল্ট ও রিপোর্ট</b><small>পরীক্ষার রেজাল্ট রাখা আর হাজিরার CSV ডাউনলোড করা যায়।</small></div></li>
+    </ul>
+  </div>
+  <form method="post" action="/login">
+    <h2>লগইন করুন</h2>
+    <!--ERROR-->
+    <label>ইউজারনেম<input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus></label>
+    <label>পাসওয়ার্ড<input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">লগইন</button>
+  </form>
+</main>
+<script>
+const sel=document.getElementById('themeSel');
+sel.value=document.documentElement.dataset.theme||'auto';
+sel.onchange=()=>{const t=sel.value,r=document.documentElement;
+  if(t==='auto')delete r.dataset.theme;else r.dataset.theme=t;
+  try{localStorage.setItem('theme',t)}catch{}};
+</script>
+</body></html>
