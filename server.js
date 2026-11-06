@@ -11,6 +11,8 @@
 //   SMS_URL        SMS company r link, {to} ar {msg} shoho (README dekhun). Na dile TEST mode.
 //   SMS_METHOD     GET (default) ba POST
 //   SMS_BODY       POST hole body, jemon: api_key=XXX&to={to}&msg={msg}
+//   SMS_TYPE       form (default) ba json. json hole SMS_BODY JSON hisebe jay
+//   SMS_AUTH       username:password thakle Basic auth header jay (jemon phone SMS gateway)
 //   SMS_OK_TEXT    SMS company r uttore ei lekha thakle "pathano holo" dhora hobe (aichhik)
 
 const http = require('http');
@@ -28,6 +30,8 @@ const SMS_URL = process.env.SMS_URL || '';
 const SMS_METHOD = (process.env.SMS_METHOD || 'GET').toUpperCase();
 const SMS_BODY = process.env.SMS_BODY || '';
 const SMS_OK_TEXT = process.env.SMS_OK_TEXT || '';
+const SMS_TYPE = (process.env.SMS_TYPE || 'form').toLowerCase();
+const SMS_AUTH = process.env.SMS_AUTH || '';
 const TZ = 'Asia/Dhaka';
 
 const PAGE = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf8');
@@ -361,17 +365,26 @@ async function sendSms(phone, message) {
   if (!SMS_URL) return { status: 'test', info: 'SMS_URL সেট করা নেই, তাই আসল SMS যায়নি (টেস্ট)' };
   const to = normPhone(phone);
   if (!to) return { status: 'failed', info: 'ভুল মোবাইল নম্বর' };
-  const sub = (tpl) => tpl
-    .replace(/\{to\}/g, encodeURIComponent(to))
-    .replace(/\{to11\}/g, encodeURIComponent(to.slice(2)))
-    .replace(/\{msg\}/g, encodeURIComponent(message));
+  // Link/form e URL encode, JSON body te JSON escape (", \, notun line)
+  const jsonEsc = s => JSON.stringify(String(s)).slice(1, -1);
+  const sub = (tpl, esc) => tpl
+    .replace(/\{to\}/g, () => esc(to))
+    .replace(/\{to11\}/g, () => esc(to.slice(2)))
+    .replace(/\{msg\}/g, () => esc(message));
   try {
-    const opts = { method: SMS_METHOD, signal: AbortSignal.timeout(20000) };
-    if (SMS_METHOD === 'POST') {
-      opts.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      opts.body = sub(SMS_BODY);
+    const opts = { method: SMS_METHOD, signal: AbortSignal.timeout(20000), headers: {} };
+    if (SMS_AUTH) opts.headers.Authorization = 'Basic ' + Buffer.from(SMS_AUTH).toString('base64');
+    if (SMS_METHOD === 'POST' && SMS_TYPE === 'json') {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = sub(SMS_BODY, jsonEsc);
+      try { JSON.parse(opts.body); } catch {
+        return { status: 'failed', info: 'SMS_BODY ঠিক JSON না (Render এর SMS_BODY দেখুন)' };
+      }
+    } else if (SMS_METHOD === 'POST') {
+      opts.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      opts.body = sub(SMS_BODY, encodeURIComponent);
     }
-    const res = await fetch(sub(SMS_URL), opts);
+    const res = await fetch(sub(SMS_URL, encodeURIComponent), opts);
     const text = (await res.text()).slice(0, 300);
     const ok = res.ok && (!SMS_OK_TEXT || text.includes(SMS_OK_TEXT));
     return { status: ok ? 'sent' : 'failed', info: `HTTP ${res.status}: ${text}` };

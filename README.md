@@ -20,6 +20,8 @@ ESP32 + RC522 দিয়ে হাজিরা, অভিভাবককে SM
 | `SMS_METHOD` | `GET` বা `POST` | না (ডিফল্ট GET) |
 | `SMS_BODY` | POST হলে body, যেমন `api_key=XXX&number={to}&message={msg}` | না |
 | `SMS_OK_TEXT` | SMS গেলে কোম্পানির উত্তরে যে লেখা থাকে | না |
+| `SMS_TYPE` | `form` (ডিফল্ট) বা `json` | না |
+| `SMS_AUTH` | `username:password`, যদি SMS সার্ভিস লগইন চায় | না |
 
 `SMS_URL` উদাহরণ (আসল ফরম্যাট কোম্পানির API ডকুমেন্ট দেখে বসাবেন):
 ```
@@ -28,6 +30,20 @@ https://api.example.com/send?api_key=তোমার_KEY&to={to}&msg={msg}
 - `{to}` → 8801XXXXXXXXX
 - `{to11}` → 01XXXXXXXXX
 - `{msg}` → মেসেজ
+
+### নিজের Android ফোন দিয়ে SMS (টেস্টের জন্য)
+ফোনে **SMS Gateway for Android** অ্যাপ চালু করে **Cloud Server** অন করুন। অ্যাপে যে ইউজারনেম আর পাসওয়ার্ড দেখাবে, সেটা দিয়ে Render-এ বসান:
+
+| নাম | মান |
+|---|---|
+| `SMS_URL` | `https://api.sms-gate.app/3rdparty/v1/messages` |
+| `SMS_METHOD` | `POST` |
+| `SMS_TYPE` | `json` |
+| `SMS_AUTH` | `অ্যাপের_ইউজারনেম:অ্যাপের_পাসওয়ার্ড` |
+| `SMS_BODY` | `{"textMessage":{"text":"{msg}"},"phoneNumbers":["+{to}"]}` |
+| `SMS_OK_TEXT` | `"id"` |
+
+SMS যায় ফোনের SIM থেকে, তাই ফোন চালু, চার্জে আর ইন্টারনেটে রাখুন।
 
 ## অটো SMS
 - প্রতিদিন সেটিংসের সময়ের পরে একবার চেক হয়।

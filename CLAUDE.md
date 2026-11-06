@@ -46,6 +46,8 @@ The firmware is already flashed. Changing it means re-flashing by hand, so keep 
 | `SMS_METHOD` | `GET` (default) or `POST`. |
 | `SMS_BODY` | Form body template for POST, same placeholders. |
 | `SMS_OK_TEXT` | Substring that must appear in the provider response for a send to count as success. |
+| `SMS_TYPE` | `form` (default) or `json`. With `json`, `SMS_BODY` is sent as JSON and placeholders are JSON-escaped instead of URL-encoded. |
+| `SMS_AUTH` | `username:password`. If set, it is sent as an HTTP Basic `Authorization` header. Never put credentials in `SMS_URL`, because Node's `fetch` rejects URLs that contain them. |
 
 ## Database (Postgres; tables created/migrated in `pgStore.init()`)
 - `attendance(id, day DATE, time TEXT, roll, name, uid, status, created_at)`, with a partial unique index of one `Present` per `(day, uid)`.
@@ -78,6 +80,7 @@ The firmware is already flashed. Changing it means re-flashing by hand, so keep 
 - Chosen provider: **HostServerBD** non-masking (৳100 minimum top-up, ~৳0.39/SMS, pays via bKash). The account is being opened; **the API docs have not been received yet**.
 - Once the docs arrive, map them to `SMS_URL` / `SMS_METHOD` / `SMS_BODY` / `SMS_OK_TEXT`. Prefer configuring over code changes. If the provider returns HTTP 200 with an error code in JSON, set `SMS_OK_TEXT` accordingly.
 - Never commit API keys. They live only in Render env vars.
+- Free test option: an Android phone running "SMS Gateway for Android" (capcom6, cloud mode). Set `SMS_URL=https://api.sms-gate.app/3rdparty/v1/messages`, `SMS_METHOD=POST`, `SMS_TYPE=json`, `SMS_AUTH=<app user>:<app password>`, `SMS_BODY={"textMessage":{"text":"{msg}"},"phoneNumbers":["+{to}"]}` and `SMS_OK_TEXT="id"`. A 202 response only means the cloud accepted the SMS; the phone sends it later.
 
 ## Local testing
 ```
